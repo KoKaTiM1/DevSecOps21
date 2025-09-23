@@ -1,3 +1,4 @@
 # Ignore personal AWS access keys file
 privateAWS_accessKeys.csv
 Download_Course*
+PPTs/
