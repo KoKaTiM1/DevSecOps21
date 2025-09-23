@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  YourName:
+    Type: String
+    Description: "Enter you user name"
+    Default: "*"
+
+  GroupName:
+    Type: String
+    Description: "Enter you group name"
+    Default: "CFAdmins"
+
+  Password:
+    Type: String
+    Description: "Enter a strong password for the Admin user. Must be at least 8 characters long,must include at least three of the following mix of character types: uppercase letters (A-Z), lowercase letters (a-z), numbers (0-9), and symbols ! @ # $ % ^ & * ( ) _ + - (hyphen) = [ ] { } | '."
+    NoEcho: true
+  ExternalAccountId:
+    Type: String
+    Default: "761018874600"
+    Description: "AWS Account ID that can assume this role"
+
+  EnableCrossAccountRole:
+    Type: String
+    AllowedValues: [true, false]
+    Default: false
+    Description: "Set to true to create a cross-account role"
+
+
+Conditions:
+  CreateCrossAccountRole: !Equals [!Ref EnableCrossAccountRole, true]
+
+
+Resources:
+
+##################
+### IAM Groups ###
+##################
+
+  CFAdminGroup:
+      Type: AWS::IAM::Group
+      Properties:
+        GroupName: !Ref GroupName
+        ManagedPolicyArns: #ARN == ID
+          - arn:aws:iam::aws:policy/AdministratorAccess
+
+#################
+### IAM Users ###
+#################
+
+  CFAdmin:
+    Type: "AWS::IAM::User"
+    Properties: 
+      UserId: !Ref YourName 
+      Groups: 
+        - !Ref CFAdminGroup # == arn:aws:iam::772886489592:group/CFAdmins
+      LoginProfile:
+        Password: !Ref Password
+        PasswordResetRequired: false
+  
+  UserToGroupAddition:
+    Type: "AWS::IAM::UserToGroupAddition"
+    Properties: 
+      GroupName: !Ref CFAdminGroup
+      Users: !Ref YourName
+
+#################
+### IAM Roles ###
+#################
+
+  CrossAccountRole:
+    Type: AWS::IAM::Role
+    Condition: CreateCrossAccountRole
+    Properties:
+      RoleName: CrossAccountAccessRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${ExternalAccountId}:root
+            Action: sts:AssumeRole
+      Description: Role that allows cross-account access
+      Policies:
+        - PolicyName: ExamplePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+  # EC2RoleForS3:
+  #   Type: "AWS::IAM::Role"
+  #   Properties:
+  #     RoleName: "EC2RoleForS3Access"
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: "Allow"
+  #           Principal:
+  #             Service: "ec2.amazonaws.com"
+  #           Action: "sts:AssumeRole"
+  #     ManagedPolicyArns:
+  #       - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  #     Path: "/"
+
+  # LambdaFullAccessRole:
+  #   Type: "AWS::IAM::Role"
+  #   Properties:
+  #     RoleName: "LambdaFullAccessRole"
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: "Allow"
+  #           Principal:
+  #             Service: "lambda.amazonaws.com"
+  #           Action: "sts:AssumeRole"
+  #     ManagedPolicyArns:
+  #       - "arn:aws:iam::aws:policy/AdministratorAccess"
+  #     Path: "/"

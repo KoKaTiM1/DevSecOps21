@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  CFAdminGroup:
+      Type: AWS::IAM::Group
+      Properties:
+        GroupName: "CFAdmins" # Hardcoded Name
+        ManagedPolicyArns: #ARN == ID
+          - arn:aws:iam::aws:policy/AdministratorAccess
+
+  CFAdmin:
+    Type: "AWS::IAM::User"
+    Properties: 
+      UserName: "CFAdmin" # Hardcoded Name
+      Groups: 
+        - !Ref CFAdminGroup # == arn:aws:iam::772886489592:group/CFAdmins
+      LoginProfile:
+        Password: "TempPass@123"  # Hardcoded Temporerly Password
+        PasswordResetRequired: true
+      
+
+  # CFAdmin2:
+  #   Type: "AWS::IAM::User"
+  #   Properties: 
+  #     UserName: "CFAdmins" # Hardcoded Name
+  #     Groups: 
+  #       - !Ref CFAdminGroup
+  #     LoginProfile:
+  #       Password: "TempPass@123"  # Hardcoded Temporerly Password
+  #       PasswordResetRequired: true
