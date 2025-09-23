@@ -17,7 +17,6 @@ Resources:
       LoginProfile:
         Password: "TempPass@123"  # Hardcoded Temporerly Password
         PasswordResetRequired: true
-      
 
   # CFAdmin2:
   #   Type: "AWS::IAM::User"

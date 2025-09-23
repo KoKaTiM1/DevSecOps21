@@ -5,7 +5,7 @@ Parameters:
   ScheduleExpression:
     Type: String
     Default: 'cron(0 22 * * ? *)'
-    Description: 'How often to run cleanup - daily at 22:00 UTC (cron expression or rate)'
+    Description: 'How often to run cleanup - daily at 20:00 UTC (cron expression or rate)'
 
 Resources:
   # IAM Role for Lambda

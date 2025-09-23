@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::LanguageExtensions'
+
+Parameters:
+  UserPassword:
+    Type: String
+    Default: 'Pa$$w0rd'
+    NoEcho: true
+    Description: 'Initial password for all users (will be required to change on first login)'
+
+Mappings:
+  GroupPolicies:
+    Developers:
+      PolicyName: "DeveloperPolicy"
+      Actions: "ec2:Describe*,ec2:RunInstances,ec2:StartInstances,ec2:StopInstances,s3:Get*,s3:List*,s3:PutObject"
+      Resources: "arn:aws:ec2:*:*:instance/*,arn:aws:s3:::dev-bucket/*,arn:aws:s3:::dev-bucket"
+    
+    Testers:
+      PolicyName: "TesterPolicy"
+      Actions: "ec2:Describe*,ec2:StartInstances,ec2:StopInstances,s3:Get*,s3:List*"
+      Resources: "arn:aws:ec2:*:*:instance/i-*,arn:aws:s3:::test-bucket/*,arn:aws:s3:::test-bucket"
+    
+    Administrators:
+      PolicyName: "AdminPolicy" 
+      Actions: "*"
+      Resources: "*"
+    
+    Readonly:
+      PolicyName: "ReadOnlyPolicy"
+      Actions: "ec2:Describe*,ec2:Get*,s3:Get*,s3:List*,rds:Describe*"
+      Resources: "*"
+    
+    Auditors:
+      PolicyName: "AuditorPolicy"
+      Actions: "ec2:Describe*,s3:Get*,s3:List*"
+      Resources: "*"
+
+  UserProperties:
+    DevUser:
+      UserName: "dev-user"
+      Groups: "Developers,Testers" 
+    
+    TestUser:
+      UserName: "test-user" 
+      Groups: "Testers"
+    
+    AdminUser:
+      UserName: "admin-user"
+      Groups: "Administrators,Developers"  
+    
+    ReadUser:
+      UserName: "readonly-user"
+      Groups: "Readonly,Testers"
+    
+    AuditorUser:
+      UserName: "auditor-user"
+      Groups: "Auditors"
+
+Resources:
+  'Fn::ForEach::IAMGroups':
+    - GroupName
+    - [Developers, Testers, Administrators, Readonly, Auditors]
+    - 'Group${GroupName}':
+        Type: 'AWS::IAM::Group'
+        Properties:
+          GroupName: !Ref GroupName
+          Policies: 
+            - PolicyName: !FindInMap [GroupPolicies, !Ref GroupName, PolicyName]
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: "Allow"
+                    Action: !Split [",", !FindInMap [GroupPolicies, !Ref GroupName, Actions]]
+                    Resource: !Split [",", !FindInMap [GroupPolicies, !Ref GroupName, Resources]]
+
+  'Fn::ForEach::IAMUsers':
+    - UserKey
+    - [DevUser, TestUser, AdminUser, ReadUser, AuditorUser]
+    - 'User${UserKey}':
+        Type: 'AWS::IAM::User'
+        Properties:
+          UserName: !FindInMap [UserProperties, !Ref UserKey, UserName]
+          Groups: !Split [",", !FindInMap [UserProperties, !Ref UserKey, Groups]]
+          LoginProfile:
+            Password: !Ref UserPassword
+            PasswordResetRequired: true
+          Policies:
+            - PolicyName: "AllowSelfPasswordChange"
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: "Allow"
+                    Action: "iam:ChangePassword"
+                    Resource: "arn:aws:iam::*:user/${aws:username}"

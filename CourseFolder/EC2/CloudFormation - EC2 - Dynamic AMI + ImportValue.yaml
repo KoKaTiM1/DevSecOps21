@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  # EC2 Instance in VPC1
+  EC2InstanceVPC1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64:1}}'
+      InstanceType: t3.micro
+      SubnetId: !ImportValue 
+        'VPCs-PublicSubnet1AId'
+      SecurityGroupIds:
+        - !ImportValue 
+          'VPCs-SecurityGroup1Id'
+      Tags:
+        - Key: Name
+          Value: EC2-VPC1
+        - Key: CloudFormation
+          Value: True
+
+  # EC2 Instance in VPC2
+  EC2InstanceVPC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64:1}}'
+      InstanceType: t3.micro
+      SubnetId: !ImportValue 
+        'VPCs-PublicSubnet2AId'
+      SecurityGroupIds:
+        - !ImportValue 
+          'VPCs-SecurityGroup2Id'
+      Tags:
+        - Key: Name
+          Value: EC2-VPC2
+        - Key: CloudFormation
+          Value: True
+
+Outputs:
+
+  EC2InstanceVPC1PublicIP:
+    Description: Public IP of EC2 instance in VPC1
+    Value: !GetAtt EC2InstanceVPC1.PublicIp
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceVPC1PublicIP"
+
+  EC2InstanceVPC2PublicIP:
+    Description: Public IP of EC2 instance in VPC2
+    Value: !GetAtt EC2InstanceVPC2.PublicIp
+    Export:
+      Name: !Sub "${AWS::StackName}-EC2InstanceVPC2PublicIP" 

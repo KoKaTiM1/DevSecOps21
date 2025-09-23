@@ -1,0 +1,54 @@
+Attach the new EBS volume to the first VM
+
+First VM
+
+Check if the EBS volume is attached
+lsblk
+
+Format the volume
+sudo mkfs.ext4 /dev/xvdb
+
+Create the mount point
+sudo mkdir /mnt/ebs
+
+Mount the EBS volume to the mount point
+sudo mount /dev/xvdb /mnt/ebs
+
+Check if the mount was successful 
+df -h
+
+Set permissions on directory
+sudo chmod -R 777 /mnt/ebs
+
+Create a new file within the EBS volume
+echo "Testing EBS" > /mnt/ebs/testfile.txt
+
+Unmount the EBS volume
+sudo umount /mnt/ebs
+
+Detach the EBS volume from first VM
+
+Attach the EBS volume to the second VM
+
+Second VM
+
+Check if the EBS volume is attached
+lsblk
+
+Create the mount point
+sudo mkdir /mount/ebs
+
+Mount the EBS volume to the mount point
+sudo mount /dev/xvdb /mount/ebs
+
+Check if the mount was successful 
+df -h
+
+
+Check if the file from first VM is present 
+ls /mount/ebs
+
+Resize the EBS 10 => 15
+
+Update the system to the new size
+sudo resize2fs /dev/xvdb

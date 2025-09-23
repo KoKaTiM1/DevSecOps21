@@ -1,0 +1,152 @@
+Step-by-Step Guide to Configure SNS with Two SQS Queues and Filters
+
+This guide demonstrates how to set up an SNS topic with two SQS queues, each filtering messages based on specific prefixes (e.g., "bold-" and "hairy-").
+
+
+Prerequisites
+
+An AWS account.
+
+Access to the AWS Management Console.
+
+An IAM user/role with permissions for SNS, SQS, and Lambda.
+
+
+Step 1: Create an SNS Topic
+
+Go to the Amazon SNS service in the AWS Management Console.
+
+Click Topics > Create topic.
+
+Select Standard as the type and provide a name for the topic, e.g., FilteredTopic.
+
+Click Create topic.
+
+
+Step 2: Create Two SQS Queues
+
+Queue 1: For Messages with Prefix "bold-"
+
+Go to the Amazon SQS service.
+
+Click Create queue.
+
+Choose Standard queue.
+
+Provide a name, e.g., BoldQueue.
+
+Leave the default settings and click Create queue.
+
+Queue 2: For Messages with Prefix "hairy-"
+
+Repeat the steps above and name this queue HairyQueue.
+
+
+Step 3: Subscribe SQS Queues to the SNS Topic
+
+Subscribe BoldQueue
+
+In the SNS Topics section, select FilteredTopic.
+
+Under the Subscriptions tab, click Create subscription.
+
+Set the following:
+
+Protocol: SQS.
+
+Endpoint: The ARN of BoldQueue (find it in the SQS queue details).
+
+Click Create subscription.
+
+Subscribe HairyQueue
+
+Repeat the steps above, but use the ARN of HairyQueue as the endpoint.
+
+
+Step 4: Add Filter Policies to Subscriptions
+
+BoldQueue Filter
+
+In the Subscriptions tab of your SNS topic, locate the subscription for BoldQueue and click Edit.
+
+In the Filter policy section, add the following:
+
+{
+  "FilterKey": [
+    {
+      "prefix": "bold-"
+    }
+  ]
+}
+
+Click Save changes.
+
+HairyQueue Filter
+
+Repeat the steps above for HairyQueue, but use the following filter policy:
+
+{
+  "FilterKey": [
+    {
+      "prefix": "hairy-"
+    }
+  ]
+}
+
+
+Step 5: Publish Messages to the SNS Topic
+
+To test the filters, publish messages with appropriate attributes.
+
+Example Message for BoldQueue
+
+Go to the Amazon SNS service.
+
+Select FilteredTopic and click Publish message.
+
+Set the following:
+
+Message body: This is a bold message.
+
+Message attributes:
+
+Key: FilterKey
+
+Type: String
+
+Value: bold-test
+
+Click Publish message.
+
+Example Message for HairyQueue
+
+Repeat the steps above but set the attribute value to hairy-test.
+
+
+Step 6: Verify Messages in SQS Queues
+
+Go to the Amazon SQS service.
+
+Check the BoldQueue and HairyQueue to ensure that only the expected messages are received.
+
+
+Step 7: Automate Message Publishing (Optional)
+
+You can use the AWS CLI to publish messages while including a --subject parameter that your Lambda function uses to determine the file name for S3 uploads:
+
+aws sns publish \
+    --topic-arn arn:aws:sns:us-east-1:123456789012:FilteredTopic \
+    --message "This is the body of the message." \
+    --subject "bold-message" \
+    --message-attributes '{"FilterKey":{"DataType":"String","StringValue":"bold-test"}}'
+
+aws sns publish \
+    --topic-arn arn:aws:sns:us-east-1:123456789012:FilteredTopic \
+    --message "This is another message." \
+    --subject "hairy-message" \
+    --message-attributes '{"FilterKey":{"DataType":"String","StringValue":"hairy-test"}}'
+
+Summary
+
+This setup demonstrates how to use SNS with SQS and filter messages based on custom attributes. The two queues will only receive messages matching their specific prefix filters, providing a scalable and efficient message processing solution.
+
